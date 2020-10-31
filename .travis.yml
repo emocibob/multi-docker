@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t emocibob/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true emocibob/react-test npm test
+
+after_success:
+  - docker build -t emocibob/multi-client ./client
+  - docker build -t emocibob/multi-nginx ./nginx
+  - docker build -t emocibob/multi-server ./server
+  - docker build -t emocibob/multi-worker ./worker
+  # Log in to docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take images and push them to docker hub
+  - docker push emocibob/multi-client
+  - docker push emocibob/multi-nginx
+  - docker push emocibob/multi-server
+  - docker push emocibob/multi-worker
